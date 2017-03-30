@@ -188,7 +188,8 @@ public class ClienteTCP extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     // End of variables declaration//GEN-END:variables
 
-    private void enviarSaludoInicial(String hola) {
-      out.println(fabricaMensajes.mensajeSaludoCliente(hola));    
+    private void enviarSaludoInicial(String alias) {
+      out.println(fabricaMensajes.mAlias(alias));    
+      out.flush();
     }
 }

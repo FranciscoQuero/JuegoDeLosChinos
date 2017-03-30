@@ -200,23 +200,7 @@ public class ServidorTCP {
                         // Mensaje:
                         // ANADIRCONTACTO <nombre de usuario>
                         //
-                    /*case Protocolo.solicitudAnadir:
-                        
-                        // Comprobamos si existe el usuario a a?adir:
-                        u0=(Usuario)usuarios.get(protocolo.solicitudLogin);
-                        
-                        if(u0==null){
-                            // No existe:
-                            //protocolo.usuarioNoExiste();
-                            protocolo.responderAdicionDenegada(protocolo.solicitudLogin);
-                        } else {
-                            // Existe y lo a?adimos a la lista del usuario.
-                            //
-                            u.anadirContacto(u0.usuario);
-                            protocolo.responderAdicionAceptada(u0.usuario);
-                        }
-                        
-                        break;*/
+                    
                     
                         // Solicitud de la lista de contactos:
                         // LISTARCONTACTOS
@@ -244,64 +228,7 @@ public class ServidorTCP {
                         }
                
                         break;
-                        
-                        // Solicitud para eliminar un contacto de la lista propia:
-                        // Mensaje:
-                        // ELIMINAR
-                        //
-                    /*case Protocolo.solicitudEliminar:
-                        {
-                            // Comprueba si existe el contacto:
-                        String []lista;
-                        String contacto;
-                        int j=0;
-                        boolean encontrado=false;
-                        
-                        lista=new String[u.contactos.size()];
-                        
-                        
-                        // Buscamos el contacto para eliminarlo:
-                        for (ListIterator i = u.contactos.listIterator(u.contactos.size());!encontrado&& i.hasPrevious(); ) {
-                            String usuarioTMP=(String)i.previous();
-                            if(protocolo.solicitudLogin.compareTo(usuarioTMP)==0){
-                                encontrado=true;
-                                u.contactos.remove(usuarioTMP);
-                            }
-                            j++;
-                        }
-                        u.listaContactos();
-                        
-                        if(encontrado){
-                            // Enviar mensaje de operaci?n correcta
-                            protocolo.responderEliminacionCorrecta(protocolo.solicitudLogin);
-                            
-                        } else {
-                            // Enviar mensaje de operaci?n incorrecta
-                           protocolo.responderEliminacionIncorrecta(protocolo.solicitudLogin);
-                        }
-                    }
-                        
-                    // Solicitud de direccio'n del usuario especificado:
-                    // mensaje:
-                    // LOCALIZAR <nombre de usuario>
-                    //
-                    case Protocolo.solicitudLocalizar:
-                    {
-                        // Comprobamos que exista el usuario:
-                        u0=(Usuario)usuarios.get(protocolo.solicitudLogin);
-                        
-                        if(u0==null){
-                            // Si no existe, se devuelve respuesta incorrecta:
-            
-                            protocolo.responderLocalizarContactoDesconocido(protocolo.solicitudLogin);
-                        } else {
-                            // Existe, as? que obtenemos su direcci?n:
-                            protocolo.responderLocalizacionUsuario(protocolo.solicitudLogin,u0.obtenerLocalizacion());
-                        }
-                    }   
-                        
-                        break;*/
-                    
+                                            
                     default:
                         break;
                 }
@@ -311,37 +238,4 @@ public class ServidorTCP {
         }
         
     }
-    
-    /*
-     * Constructor de esta clase servidora, 
-     * @param puerto 
-     
-    private ServidorTCP(int puerto) {
-        final ArrayList<String> listadoAlias = new ArrayList<>(); // Intento de variable global
-        ServerSocket socketEscucha;
-        
-        try { /* Duda: este try para que sirve? puedo anidar este try y luego 
-            llamar a un metodo que implementa un try? 
-            
-            socketEscucha=new ServerSocket(puerto);
-            
-            // Mientras que no haya que apagar el servidor:
-            while(!salir){
-                
-                // Esperamos una conexión:
-                Socket socketConexion = socketEscucha.accept();
-                
-                Protocolo sesion = new Protocolo();
-                sesion.main(listadoAlias, socketConexion);
-                
-                socketConexion.close();
-            }
-            
-            socketEscucha.close();
-            
-            
-        } catch (IOException ex) {
-            Logger.getLogger(ServidorTCP.class.getName()).log(Level.SEVERE, null, ex);
-        }        
-    }*/
 }

@@ -88,6 +88,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
                 case estadoInicial:
                     error = solicitudLoguear;
                     // Si se trata del registro:
+                    System.out.println("Has entrado correctamente al estado inicial.");
                     if(palabras[0].compareTo("1110")==0){
                         System.out.println("Logueando como "+palabras[1]+"...");
                         // Ojo, no se comprueba el n?mero de campos, as? que es
@@ -144,7 +145,6 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
                 case estadoEsperandoNumeroChinos:
                     solicitudNumRondas = parseInt(palabras[1]);
                     error = estadoEsperandoNumeroChinos;
-  //Como elijo entre estados?                  estado = estado;
                     
                     break;
                 case estadoFinal:
@@ -214,64 +214,3 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
         out.println(fabricaDeMensajes.mJugadorEncontrado(texto));
     }
 }
-
-    
-    // Tarea pendiente: separar los cases de modo que una vez logueado, no puedas
-    // recibir nuevos logins por ejemplo. Es opcional porque un cliente bien diseñado
-    // no debería dar problemas.
-    /*public void main(Socket socketConexion, ArrayList<String> listadoAlias, String []argumentos) {
-        String respuesta = "";
-        String linea, mensaje;
-        
-        try{
-            PrintWriter out = new PrintWriter(socketConexion.getOutputStream());
-            BufferedReader in = new BufferedReader(new InputStreamReader(socketConexion.getInputStream()));
-
-            
-            // Leemos una petición:
-            linea = in.readLine();
-
-            // Interpretamos la petición. Para que no haya problema con las letras de la palabra
-            // al compararlas con los comandos, las pasamos todas a minúsculas:
-            mensaje = linea.toLowerCase();
-            mensaje = mensaje.substring(5, mensaje.length()-1);
-
-            int codigo = Integer.parseInt(mensaje.substring(0, 4));
-
-            switch(codigo){
-                case 2:
-                    respuesta = this.desconexion(mensaje);
-                    out.print(respuesta);
-                break;
-                case 4:
-                    // Mensaje de peticion vs maquina
-                break;
-                case 5:
-                    // Mensaje de peticion vs humano
-                break;
-                case 7:
-                    // Mensaje de numero de rondas
-                break;
-                case 8:
-                    // Mensaje de numero de chinos mandados
-                break;
-                case 14:
-                    this.login(mensaje);
-                    
-                    if ("".equals(this.alias)) {
-                        respuesta = "No logueado. Intenta nuevo alias";
-                    }
-                    else {
-                        respuesta = "Logueado correctamente con el alias" + this.alias;
-                    }
-                    out.print(respuesta);
-                break;
-                default:
-                    respuesta = "Mensaje erroneo";
-                    out.print(respuesta);
-                break;
-            }
-        }catch (IOException ex) {
-            Logger.getLogger(JuegoDeLosChinos.ServidorTCP.class.getName()).log(Level.SEVERE, null, ex);     
-        }  
-    }*/
