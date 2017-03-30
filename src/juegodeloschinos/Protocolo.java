@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import static java.lang.Integer.parseInt;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -38,23 +39,24 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
         static final int estadoError=8;
         
         // Co'digos de las solicitudes:
-        public static final int   solicitudRegistrar=2;
-        public static final int   solicitudAnadir=3;         
-        public static final int   solicitudListado=4; 
-        public static final int   solicitudCerrar=5; 
-        public static final int   solicitudEliminar=6;  
-        public static final int  solicitudLocalizar=7;
+        public static final int solicitudLoguear = 1;
+        public static final int   solicitudVsHumano=2;
+        public static final int   solicitudVsMaquina=3;         
+        public static final int   solicitudDesconectar=4; 
+        public static final int   solicitudVsJugador=5; 
+        public static final int   solicitudEsperarJ2=6;  
+        public static final int  solicitudFinalizar=7;
         
         // Variables temporales que contienen los datos de la solicitud en curso:
-        String solicitudLogin;
-        String solicitudContrasenia;
-        String solicitudApodo;
-        String solicitudDireccion;
-        int solicitudPuerto;
+        public String solicitudLogin;
+        public String solicitudRival;
+        public int solicitudNumRondas;
+        public int solicitudChinos;
+        public int[] solicitudChinosElegidos;
         
         MensajeProtocoloJuegoChinos fabricaDeMensajes;
                    
-    /** Creates a new instance of ServidorProtocoloDirectorio */
+    /** Creates a new instance of Protocolo */
     public Protocolo( String n, BufferedReader in_, PrintWriter out_) {
         in=in_;
         out=out_;
@@ -72,7 +74,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
     //  Devuelve un co'digo de mensaje recibido, que la clase "servidor" utiliza para 
     // realizar la operacio'n que requiera.
     // 
-    int recibirPeticion(){
+    public int recibirPeticion(){
         int error=0;
         String mensaje;
         String [] palabras;
@@ -84,69 +86,73 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
             
             switch(estado){
                 case estadoInicial:
+                    error = solicitudLoguear;
+                    // Si se trata del registro:
+                    if(palabras[0].compareTo("1110")==0){
+                        System.out.println("Logueando como "+palabras[1]+"...");
+                        // Ojo, no se comprueba el n?mero de campos, as? que es
+                    // "Explotable"
+                    solicitudLogin=new String(palabras[1]);
                     
-                    // se obtiene el mensaje de bienvenida del cliente:
-                    System.out.println(nombre+": se recibe saludo ("+mensaje+")");            
-                    estado=estadoAutenticado;
+                    
+                    //solicitudPuerto=Integer.valueOf(palabras[5]);
+                    estado=estadoAutenticado; // Tal vez esto debería estar fuera del if
+                    
+                    
+                    } else {
+                        System.err.println("Peticion incorrecta: "+mensaje);
+                    }
                     
                     break;
                     
                 case estadoAutenticado:
-
-                    // Si se trata del registro:
-                    if(palabras[0].compareTo("REGISTRAR")==0){
-                        System.out.println("Registrando a "+palabras[1]+"...");
-                        // Ojo, no se comprueba el n?mero de campos, as? que es
-                    // "Explotable"
-                    solicitudLogin=new String(palabras[1]);
-                    solicitudContrasenia=new String (palabras[2]);
-                    solicitudApodo=new String (palabras[3]);
-                    solicitudDireccion=new String(palabras[4]);
-                    //solicitudPuerto=Integer.valueOf(palabras[5]);
-                    
-                    } else {
-                        System.err.println("Petici?n incorrecta: "+mensaje);
-                    }
-                    error=solicitudRegistrar;
-                    
+                        if(palabras[0].compareTo("0101")==0){
+                            error = solicitudVsHumano;
+                            estado = estadoVsHumano;
+                        } else if (palabras[0].compareTo("0100")==0){
+                            error = solicitudVsMaquina;
+                            estado = estadoVsMaquina;
+                        } else if (palabras[0].compareTo("0010")==0){
+                            error = solicitudDesconectar;
+                            estado = estadoInicial; // Tal vez haga falta hacer algo mas
+                        }
                     break;
                     
                 case estadoVsHumano:
                     
-                    // Seg?n el tipo de solicitud que se haga...
-                    if(palabras[0].compareTo("ANADIRCONTACTO")==0){
-                        
-                        // Comprobamos que el otro usuario existe:
-                        error=solicitudAnadir;
-                        solicitudLogin=palabras[1];
-                    } else if(palabras[0].compareTo("LISTARCONTACTOS")==0){
-                        // enviar la lista de contactos:
-                        error=solicitudListado;
-                    } else if(palabras[0].compareTo("CERRAR")==0){
-                        // Cerrar la conexi?n:
-                        error=solicitudCerrar;
-                    } else if(palabras[0].compareTo("ELIMINAR")==0){
-                        // Eliminar contacto
-                        error=solicitudEliminar;
-                        solicitudLogin=palabras[1];
-                    } else if(palabras[0].compareTo("LOCALIZAR")==0){
-                        // Devolver la direccion del usuario especificado:
-                        error=solicitudLocalizar;
-                        solicitudLogin=palabras[1];
-                    }
+                    error = solicitudVsJugador;
+                    estado = estadoEsperandoJ2;
+                    solicitudRival = new String(palabras[1]);
                     
                     break;
                 case estadoVsMaquina:
+                    error = solicitudVsMaquina;
+                    estado = estadoEsperandoNumeroRondas;
+                    
                     break;
                 case estadoEsperandoJ2:
+                    error = solicitudEsperarJ2;
+                    estado = estadoEsperandoNumeroRondas;
+                    
                     break;
                 case estadoEsperandoNumeroRondas:
+                    solicitudNumRondas = parseInt(palabras[1]);
+                    error = estadoEsperandoNumeroRondas;
+                    estado = estadoEsperandoNumeroChinos;
+                    
                     break;
                 case estadoEsperandoNumeroChinos:
+                    solicitudNumRondas = parseInt(palabras[1]);
+                    error = estadoEsperandoNumeroChinos;
+  //Como elijo entre estados?                  estado = estado;
+                    
                     break;
                 case estadoFinal:
+                    //¿?
                     break;
                 case estadoError:
+                    error = estadoError;
+                    estado = estadoInicial;
                     break;
                 default:
                     error=-1;
@@ -178,30 +184,34 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
     }
     
     // Envi'a mensaje de confirmacio'n de contacto aniadido:
-    int confirmarAliasIncorrecto(){
+    public int confirmarAliasIncorrecto(){
         int error=0;
         out.println(fabricaDeMensajes.mAliasIncorrecto("Error de identificacion. Prueba con otro alias."));
         return error;
     }
     
      // Envi'a mensaje de denegacio'n de contacto aniadido:
-     int notificarJugadorEncontrado(String texto){
+    public int notificarJugadorEncontrado(String texto){
         int error=0;
         out.println(fabricaDeMensajes.mJugadorEncontrado("Se ha encontrado el usuario."));
         estado=estadoEsperandoNumeroRondas;
         return error;
     }
 
-    void notificarTurno(int empiezaJugador, int numChinosMano, int numChinosTotal) {
+    public void notificarTurno(int empiezaJugador, int numChinosMano, int numChinosTotal) {
        out.println(fabricaDeMensajes.mHablaJugador(empiezaJugador, numChinosMano, numChinosTotal));   
     }
 
-    void notificarFinal(String despedida) {
+    public void notificarFinal(String despedida) {
       out.println(fabricaDeMensajes.mFinalizar(despedida));
     }
 
-    void notificarError(String textoError) {
+    public void notificarError(String textoError) {
      out.println(fabricaDeMensajes.mError(textoError));  
+    }
+    
+    public void responderSolicitudCerrar(String texto){
+        out.println(fabricaDeMensajes.mJugadorEncontrado(texto));
     }
 }
 

@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package JuegoDeLosChinos;
+package juegodeloschinos;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,9 +48,7 @@ public class ServidorTCP {
     /** Creates a new instance of Servidor */
     // Inicializacio'n simple
     public ServidorTCP() {
-        
         puerto=0;
-        
     }
     
     /**
@@ -88,7 +86,8 @@ public class ServidorTCP {
         } while(true);
         
     }
-
+// Hasta aqui, todo ok
+    
     static int iniciarServicio(int p){
         int error=0;
       
@@ -118,7 +117,7 @@ public class ServidorTCP {
     // Cada vez que se registra una solicitud del servicio al puerto de acceso,
     // se lanza una hebra nueva para ofrecerlo.
     //
-    //
+    //Todo ok hasta aqui
     static public class Servicio extends Thread {
         
         // Socket utilizado para ofrecer el servicio al cliente efectu'a la solicitud
@@ -128,8 +127,8 @@ public class ServidorTCP {
         // Manejadores de los flujos de recepcio'n y envi'o. No admiten todos los caracteres,
         // pero en este ejemplo nos ofrecen toda la funcionalidad requerida.
         PrintWriter out;
-         BufferedReader in;
-
+        BufferedReader in;
+        
          // objeto de la clase "Protocolo". Rige y mantiene los pasos de estado en el protocolo.
         Protocolo protocolo;
         
@@ -155,7 +154,7 @@ public class ServidorTCP {
                 System.err.println("Error en la hebra "+this.currentThread().getName());
             }
         }
-        
+
         // Hebra principal del servicio
         public void run(){
             int peticion=0;
@@ -173,46 +172,35 @@ public class ServidorTCP {
                     
                     // Solicitud de darse de alta en la base de datos:
                     // Mensaje:
-                    //  REGISTRAR <nombre de usuario> <contasenia> <apodo> <direccio'n de la ma'quina donde se encuentra>'
-                    case Protocolo.solicitudRegistrar:
+                    //  1110 <nombre de usuario>
+                    case Protocolo.solicitudLoguear:
 
                         System.out.println(protocolo.solicitudLogin);
 
                         // se comprueba si exsite ya el nombre de usuario solicitado:
                         u=(Usuario)usuarios.get(protocolo.solicitudLogin);
-                   
-                        // Si existe en la base de datos, se comprueba la contrase?a:
+                    
+                        // Si existe en la base de datos, se deniega el acceso
                         if(u!=null){
-                            u.asignarContrasenia(protocolo.solicitudContrasenia);
-                            u.asignarLocalizacion(protocolo.solicitudDireccion,protocolo.solicitudPuerto);
-                        
-                            // Si coinciden las contrase?as, se acepta el registro
-                            if(u.contrasenia.compareTo(protocolo.solicitudContrasenia)==0){
-                                System.out.println("Usuario "+protocolo.solicitudLogin+" registrado.");
-                                protocolo.confirmarRegistro(u.usuario);
-                            } else {
-                                // En caso de contrasenia no va'lida, se devuelve el 
-                                // mensaje de error correspondiente:
-                                // ****** A completar ******
-                                //protocolo.denegarRegistro();                                
-                            }
+                            //Denegamos
+                            protocolo.confirmarAliasIncorrecto();
                             
                         } else {
                             // Si no existe, se a?ade a la base de datos:
-                            u=new Usuario(protocolo.solicitudLogin,protocolo.solicitudContrasenia);
-                            u.asignarLocalizacion(protocolo.solicitudDireccion,0);
+                            u=new Usuario(protocolo.solicitudLogin);
+                            
                             usuarios.put(u.usuario,u);
                             System.out.println("EL usuario "+u.usuario+" ha sido dado de alta.");
-                            protocolo.confirmarRegistro(u.usuario);                            
+                            protocolo.confirmarAlias(u.usuario);                            
                         }
                         
                         break;
-                        
+
                         // Se solicita aniadir un contacto a la lista de contactos:
                         // Mensaje:
                         // ANADIRCONTACTO <nombre de usuario>
                         //
-                    case Protocolo.solicitudAnadir:
+                    /*case Protocolo.solicitudAnadir:
                         
                         // Comprobamos si existe el usuario a a?adir:
                         u0=(Usuario)usuarios.get(protocolo.solicitudLogin);
@@ -225,28 +213,18 @@ public class ServidorTCP {
                             // Existe y lo a?adimos a la lista del usuario.
                             //
                             u.anadirContacto(u0.usuario);
-                            u.listaContactos();
                             protocolo.responderAdicionAceptada(u0.usuario);
                         }
                         
-                        break;
+                        break;*/
                     
                         // Solicitud de la lista de contactos:
                         // LISTARCONTACTOS
                         //
-                     case Protocolo.solicitudListado:
+                     case Protocolo.solicitudVsHumano:
                      {
-                        String []lista;
-                        int j=0;
                         
-                        // Creamos la lista de los contactos y la enviamos en el mensaje correspondiente:
-                        lista=new String[u.contactos.size()];                        
-                        for (ListIterator i = u.contactos.listIterator(u.contactos.size()); i.hasPrevious(); ) {
-                            lista[j]=(String)i.previous();
-                            j++;
-                        }
                         
-                        protocolo.responderListadoContactos(lista);
                      }
                         break;
                         
@@ -254,12 +232,9 @@ public class ServidorTCP {
                         // Solicitud de cieere de la sesio'n:
                         // CERRAR
                         //
-                    case Protocolo.solicitudCerrar:
+                    case Protocolo.solicitudFinalizar:
                         protocolo.responderSolicitudCerrar("Que tengas un buen día");
 
-                        // indicamos que no esta' en l?nea:
-                        u.asignarLocalizacion("desconectado",-1);
-                        usuarios.put(u.usuario,u);
                         
                         try { 
                             in.close();
@@ -274,7 +249,7 @@ public class ServidorTCP {
                         // Mensaje:
                         // ELIMINAR
                         //
-                    case Protocolo.solicitudEliminar:
+                    /*case Protocolo.solicitudEliminar:
                         {
                             // Comprueba si existe el contacto:
                         String []lista;
@@ -325,14 +300,14 @@ public class ServidorTCP {
                         }
                     }   
                         
-                        break;
+                        break;*/
                     
                     default:
                         break;
                 }
                
                 
-            } while (peticion!=Protocolo.solicitudCerrar);
+            } while (peticion!=Protocolo.solicitudFinalizar);
         }
         
     }

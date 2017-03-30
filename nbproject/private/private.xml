@@ -3,10 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/C:/Users/Francis/Desktop/ProgramasJava/ComplementosProgramacion/Proyectos/JuegoDeLosChinos/src/mensajesjuegochinos/MensajeProtocoloJuegoChinos.java</file>
+            <file>file:/C:/Users/Francis/Desktop/ProgramasJava/ComplementosProgramacion/Proyectos/JuegoDeLosChinos/src/juegodeloschinos/UsuarioContenedor.java</file>
             <file>file:/C:/Users/Francis/Desktop/ProgramasJava/ComplementosProgramacion/Proyectos/JuegoDeLosChinos/src/juegodeloschinos/ServidorTCP.java</file>
-            <file>file:/C:/Users/Francis/Desktop/ProgramasJava/ComplementosProgramacion/Proyectos/JuegoDeLosChinos/src/juegodeloschinos/ProtocoloCliente.java</file>
             <file>file:/C:/Users/Francis/Desktop/ProgramasJava/ComplementosProgramacion/Proyectos/JuegoDeLosChinos/src/juegodeloschinos/Protocolo.java</file>
-            <file>file:/C:/Users/Francis/Desktop/ProgramasJava/ComplementosProgramacion/Proyectos/JuegoDeLosChinos/src/juegodeloschinos/ClienteTCP.java</file>
+            <file>file:/C:/Users/Francis/Desktop/ProgramasJava/ComplementosProgramacion/Proyectos/JuegoDeLosChinos/src/juegodeloschinos/Usuario.java</file>
         </group>
     </open-files>
 </project-private>
