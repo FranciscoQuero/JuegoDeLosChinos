@@ -101,10 +101,10 @@ public     String mHablaJugador(int empiezaJugador, int numChinosMano, int numCh
         return mensaje;
     }
     
-public     String mChinos(int numChinosMano, int numChinosTotal){
+public     String mChinos(int numChinosMano){
         String mensaje;
         
-        mensaje = "1010" +" "+ numChinosMano + " " + numChinosTotal +" "+ "*";
+        mensaje = "1010" +" "+ numChinosMano +" "+ "*";
         
             return mensaje;
     }

@@ -35,10 +35,11 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
         static final int estadoEsperandoJ2=4;
         static final int estadoEsperandoNumeroRondas=5;
         static final int estadoEsperandoNumeroChinos=6;
-        static final int estadoFinal=7;
-        static final int estadoError=8;
+        static final int estadoDecidiendoNuevaRonda = 7;
+        static final int estadoFinal=8;
+        static final int estadoError=9;
         
-        // Co'digos de las solicitudes:
+        // Co'digos de las solicitudes servidor:
         public static final int solicitudLoguear = 1;
         public static final int   solicitudVsHumano=2;
         public static final int   solicitudVsMaquina=3;         
@@ -46,13 +47,16 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
         public static final int   solicitudVsJugador=5; 
         public static final int   solicitudEsperarJ2=6;  
         public static final int  solicitudFinalizar=7;
+        public static final int solicitudRondas = 8;
+        
+
         
         // Variables temporales que contienen los datos de la solicitud en curso:
         public String solicitudLogin;
         public String solicitudRival;
         public int solicitudNumRondas;
         public int solicitudChinos;
-        public int[] solicitudChinosElegidos;
+        public int solicitudChinosElegidos;
         
         MensajeProtocoloJuegoChinos fabricaDeMensajes;
                    
@@ -134,18 +138,34 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
                 case estadoEsperandoJ2:
                     error = solicitudEsperarJ2;
                     estado = estadoEsperandoNumeroRondas;
-                    
+                    solicitudNumRondas = Integer.parseInt(palabras[1]);
                     break;
                 case estadoEsperandoNumeroRondas:
                     solicitudNumRondas = parseInt(palabras[1]);
-                    error = estadoEsperandoNumeroRondas;
+                    
+                    error = solicitudRondas;
+                    
                     estado = estadoEsperandoNumeroChinos;
                     
                     break;
                 case estadoEsperandoNumeroChinos:
-                    solicitudNumRondas = parseInt(palabras[1]);
-                    error = estadoEsperandoNumeroChinos;
+                    if (palabras[0].compareTo("1000")==0){ //Esta enviando numero de chinos totales
+                            solicitudChinos = Integer.parseInt(palabras[1]);
+                            error = estadoEsperandoNumeroChinos;
+                        } else if (palabras[0].compareTo("1010")==0){ //Esta enviando numero de chinos en mano
+                            solicitudChinosElegidos = Integer.parseInt(palabras[1]);
+                            error = estadoDecidiendoNuevaRonda;
+                        }
                     
+                    
+                    break;
+                case estadoDecidiendoNuevaRonda:
+                    solicitudNumRondas--;
+                    if (solicitudNumRondas == 0) {
+                        estado = estadoFinal;
+                    } else {
+                        estado = estadoEsperandoNumeroChinos;
+                    }
                     break;
                 case estadoFinal:
                     //¿?

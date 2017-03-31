@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -161,7 +162,9 @@ public class ServidorTCP {
             String mensaje;
             String [] palabras;
             Usuario u=null,u0;
-            
+            int numRondas, numChinos, numChinosTotales, numChinosRival;
+            Random r = new Random();
+            int quienEmpieza;
             // Mientras... siempre
             do {
                
@@ -205,13 +208,26 @@ public class ServidorTCP {
                         // Solicitud de la lista de contactos:
                         // LISTARCONTACTOS
                         //
-                     case Protocolo.solicitudVsHumano:
-                     {
+                     case Protocolo.solicitudVsMaquina:
+                        System.out.println("El usuario "+u.usuario+" ha decidido jugar contra la maquina");
                         
+                        numRondas = protocolo.solicitudNumRondas;
+                        System.out.println("El usuario "+u.usuario+" ha elegido "+protocolo.solicitudNumRondas+" rondas.");
+                        quienEmpieza = r.nextInt(1);
                         
-                     }
+                        if (quienEmpieza == 0){
+                            protocolo.notificarTurno(quienEmpieza, 0, 0);
+                            System.out.println("Empieza el usuario "+u.usuario);
+                        } else {
+                            //Empezamos nosotros
+                            System.out.println("Empieza la maquina contra el usuario "+u.usuario);
+                            numChinosRival = r.nextInt(6);
+                            numChinosTotales = r.nextInt(10)+1;
+                            System.out.println("La maquina ha elegido sacar "+numChinosRival+"chinos y en total: "+numChinosTotales);
+                            protocolo.notificarTurno(quienEmpieza, numChinosRival, numChinosTotales);
+                        }
+                        
                         break;
-                        
                         //
                         // Solicitud de cieere de la sesio'n:
                         // CERRAR
