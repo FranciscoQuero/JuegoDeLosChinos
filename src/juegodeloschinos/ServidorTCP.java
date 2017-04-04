@@ -22,22 +22,18 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.security.SecureRandom;
 import java.util.HashMap;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- *
- * @author jjramos
+ * Servidor TCP del juego de los chinos, desarrollado para la práctica 1 de la
+ * asignatura Desarrollo de Aplicaciones en Red. Implementa un servidor multihebra
+ * con comprobación de duplicidad de nombres de usuario, con puerto por defecto 9090.
+ * También incorpora la lógica del juego en cuestión.
+ * @author Francisco J. Quero
  */
 public class ServidorTCP {
-    //public static final ArrayList<String> listadoAlias = new ArrayList<>(); // Intento de variable global
-    boolean salir = false;
-    boolean finSesion = false;
     // Base de datos de usuarios registrados.
     static Map usuarios;
 
@@ -53,8 +49,9 @@ public class ServidorTCP {
     }
     
     /**
-     * Método principal.
-     * @param argumentos 
+     * Método principal. Lee el puerto en el que abrirá el servidor. Por defecto, 9090.
+     * Además, acepta conexiones y crea una hebra para cada una.
+     * @param args posible puerto que el usuario quiera introducir.
      */
     public static void main(String args[]){
         
@@ -87,8 +84,11 @@ public class ServidorTCP {
         } while(true);
         
     }
-// Hasta aqui, todo ok
-    
+    /**
+     * Método que inicia el servicio de escucha en el puerto seleccionado.
+     * @param p puerto en el que el servidor escuchará.
+     * @return un posible error producido si es 1.
+     */
     static int iniciarServicio(int p){
         int error=0;
       
@@ -117,8 +117,11 @@ public class ServidorTCP {
     // La subclase "Servicio" implementa las operaciones del servicio.
     // Cada vez que se registra una solicitud del servicio al puerto de acceso,
     // se lanza una hebra nueva para ofrecerlo.
-    //
-    //Todo ok hasta aqui
+/**
+ * La subclase "Servicio" implementa las operaciones del servicio.
+ * Cada vez que se registra una solicitud del servicio al puerto de acceso,
+ * se lanza una hebra nueva para ofrecerlo.
+ */
     static public class Servicio extends Thread {
         
         // Socket utilizado para ofrecer el servicio al cliente efectu'a la solicitud
@@ -148,23 +151,29 @@ public class ServidorTCP {
             
                 out= new PrintWriter(socket.getOutputStream(), true);
                 in= new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                protocolo=new Protocolo(this.currentThread().getName(),in,out);
-            
+                protocolo=new Protocolo(Servicio.currentThread().getName(),in,out);
+                System.out.println(Servicio.currentThread().getName());
             } catch(IOException e){
                 // Se acabo'
-                System.err.println("Error en la hebra "+this.currentThread().getName());
+                System.err.println("Error en la hebra "+Servicio.currentThread().getName());
             }
         }
 
-        // Hebra principal del servicio
+        /**
+         * Hebra principal del servicio. Desarrolla la lógica así como la 
+         * generación de mensajes hacia el cliente.
+         */
+        @SuppressWarnings("null")
         public void run(){
             int peticion=0;
+            int suma;
             String mensaje;
             String [] palabras;
             Usuario u=null,u0;
-            int numRondas, numChinos, numChinosTotales, numChinosRival;
-            Random r = new Random();
+            int numRondas = 0, numChinos = 0, numChinosTotales = 0, numChinosMaquina = 0;
+            SecureRandom r = new SecureRandom();
             int quienEmpieza;
+            int numChinosTotalesMaquina = 0;
             // Mientras... siempre
             do {
                
@@ -174,11 +183,8 @@ public class ServidorTCP {
                 switch(peticion=protocolo.recibirPeticion()){
                     
                     // Solicitud de darse de alta en la base de datos:
-                    // Mensaje:
-                    //  1110 <nombre de usuario>
+                    
                     case Protocolo.solicitudLoguear:
-
-                        System.out.println(protocolo.solicitudLogin);
 
                         // se comprueba si exsite ya el nombre de usuario solicitado:
                         u=(Usuario)usuarios.get(protocolo.solicitudLogin);
@@ -199,21 +205,15 @@ public class ServidorTCP {
                         
                         break;
 
-                        // Se solicita aniadir un contacto a la lista de contactos:
-                        // Mensaje:
-                        // ANADIRCONTACTO <nombre de usuario>
-                        //
-                    
-                    
-                        // Solicitud de la lista de contactos:
-                        // LISTARCONTACTOS
-                        //
+                        
                      case Protocolo.solicitudVsMaquina:
                         System.out.println("El usuario "+u.usuario+" ha decidido jugar contra la maquina");
+                        break;
                         
+                     case Protocolo.solicitudRondas:
                         numRondas = protocolo.solicitudNumRondas;
                         System.out.println("El usuario "+u.usuario+" ha elegido "+protocolo.solicitudNumRondas+" rondas.");
-                        quienEmpieza = r.nextInt(1);
+                        quienEmpieza = r.nextInt(2); // 0 si empieza el jugador, 1 si empieza la maquina
                         
                         if (quienEmpieza == 0){
                             protocolo.notificarTurno(quienEmpieza, 0, 0);
@@ -221,21 +221,60 @@ public class ServidorTCP {
                         } else {
                             //Empezamos nosotros
                             System.out.println("Empieza la maquina contra el usuario "+u.usuario);
-                            numChinosRival = r.nextInt(6);
-                            numChinosTotales = r.nextInt(10)+1;
-                            System.out.println("La maquina ha elegido sacar "+numChinosRival+"chinos y en total: "+numChinosTotales);
-                            protocolo.notificarTurno(quienEmpieza, numChinosRival, numChinosTotales);
+                            numChinosMaquina = r.nextInt(6);
+                            do {
+                                numChinosTotalesMaquina = r.nextInt(10);
+                            } while (numChinosTotalesMaquina < numChinosMaquina);
+                            System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y en total: "+numChinosTotalesMaquina);
+                            protocolo.notificarTurno(quienEmpieza, numChinosMaquina, numChinosTotalesMaquina);
                         }
-                        
-                        break;
+                         break;
+                         
+                     case Protocolo.solicitudNumChinos:
+                            numChinos = protocolo.solicitudChinosElegidos;
+                            System.out.println("Elegidos "+numChinos+" chinos por el usuario "+u.usuario);
+                         break;
+                     case Protocolo.solicitudNumChinosTotales:
+                             numChinosTotales = protocolo.solicitudChinos;
+                             System.out.println("Predichos "+numChinosTotales+" chinos por el usuario "+u.usuario);
+                             if(numChinosTotalesMaquina == 0){
+                                numChinosMaquina = r.nextInt(6);
+                                do {
+                                    numChinosTotalesMaquina = r.nextInt(10);
+                                } while (numChinosTotalesMaquina < numChinosMaquina);
+                                System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y en total: "+numChinosTotalesMaquina);
+                            }
+                             
+                            suma = numChinos + numChinosMaquina;
+                            if (suma == numChinosTotalesMaquina){
+                                protocolo.notificarGanador(0, "maquina", numChinos, numChinosTotalesMaquina);
+                                System.out.println("La maquina ha ganado esta ronda contra "+u.usuario);
+                                numRondas--;
+                            } else if(suma == numChinosTotales) {
+                                protocolo.notificarGanador(1, u.usuario, numChinos, numChinosTotalesMaquina);
+                                System.out.println("Esta ronda la ha ganado el usuario "+u.usuario);
+                                numRondas--;
+                            } else {
+                                protocolo.notificarGanador(2, "Empate", numChinos, numChinosTotalesMaquina);
+                                System.out.println("Empate en esta ronda contra "+u.usuario);
+                            }
+                            
+                            // Reseteamos parametros generados
+                            
+                            numChinosMaquina = 0;
+                            numChinosTotalesMaquina = 0;
+                         
+                            // Notificamos numero de rondas restantes
+                            protocolo.notificarRondasRestantes(numRondas);
+
+                         break;
                         //
                         // Solicitud de cieere de la sesio'n:
                         // CERRAR
                         //
                     case Protocolo.solicitudFinalizar:
-                        protocolo.responderSolicitudCerrar("Que tengas un buen día");
+                        protocolo.responderSolicitudCerrar("Un placer jugar contigo. Saludos.");
 
-                        
                         try { 
                             in.close();
                             out.close();

@@ -7,18 +7,16 @@ package cliente;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import static java.lang.Integer.parseInt;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mensajesjuegochinos.MensajeProtocoloJuegoChinos;
 
 /**
- *
- * @author Francis
+ * Clase ProtocoloCliente implementa los estados posibles ne los que puede entrar
+ * el protocolo del cliente del juego de los chinos, así como los métodos 
+ * necesarios para enviar los mensajes al servidor. También recibe e interpreta los
+ * mensajes enviados del servidor al cliente.
+ * @author Francisco J. Quero
  */
 public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
     
@@ -34,6 +32,7 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         static final int estadoEsperandoGanador=4;
         static final int estadoEsperandoNuevaRonda = 5;
         static final int estadoError = 6;
+        static final int estadoFinalizar = 7;
 
         
         // Co'digos de las notificaciones cliente:
@@ -44,6 +43,7 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         public static final int   notificacionGanador=5; 
         public static final int   notificacionFinalizar=6;  
         public static final int  notificacionError=7;
+        public static final int notificacionTurno = 8;
         
 
         
@@ -52,7 +52,10 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         public String aliasRival;
         public int numRondas;
         public int numChinos;
-        public int[] numChinosTotal;
+        public int numChinosTotal;
+        public boolean hablasElPrimero;
+        public int ganador;
+        public String ganadorAlias;
         
         public MensajeProtocoloJuegoChinos fabricaDeMensajes;
                    
@@ -74,24 +77,29 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
     // 
     public int recibirPeticion(){
         int error=0;
+        int aux;
         String mensaje;
         String [] palabras;
         
         try {   
-            // Seg?n el estado actual, se interpreta el mensaje;
+            // Segun el estado actual, se interpreta el mensaje;
             mensaje=in.readLine();
+            // Se divide el mensaje en palabras:
             palabras=mensaje.split(" ");
             
+            // Descomentar para que aparezca en la linea de comandos el mensaje recibido:
+            // System.out.println(mensaje); 
             switch(estado){
+            // Estado Inicial
                 case estadoInicial:
                     
-                    // Si se trata del registro:
-                    System.out.println("Has entrado correctamente al estado inicial.");
+                    // Si se trata de confirmacion de login 0001:
                     if(palabras[0].compareTo("0001")==0){
-                        System.out.println("Logueando correctamente...");
+                        System.out.println("Logueado correctamente...");
 
-                        estado=estadoAutenticado; // Tal vez esto debería estar fuera del if
+                        estado=estadoAutenticado; 
                         error = notificacionAutenticado;
+                    // Si se trata de login incorrecto 0000:
                     } else if(palabras[0].compareTo("0000")==0){
                         System.out.println("Login incorrecto, intenta de nuevo.");
                         error = notificacionAliasIncorrecto;
@@ -100,43 +108,76 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
                     }
                     
                     break;
-                    
+                
+            // Estado autenticado
                 case estadoAutenticado:
-                        if(palabras[0].compareTo("0101")==0){
-                            error = notificacionAutenticado;
-                            estado = estadoEsperandoChinosRival;
-                        } else if (palabras[0].compareTo("0100")==0){
-                            error = notificacionRondasRestantes;
-                            estado = estadoEsperandoChinosRival;
+                        // Si se trata de notificacion de turno:
+                        if (palabras[0].compareTo("1001")==0){
+                            error = notificacionTurno;
+                            aux = parseInt(palabras[1]);
+                            if(aux == 0) {
+                                hablasElPrimero = true;
+                                System.out.println("Te toca hablar el primero.");
+                            }
+                            else {
+                                hablasElPrimero = false;
+                                numChinos = parseInt(palabras[2]);
+                                numChinosTotal = parseInt(palabras[3]);
+                                System.out.println("Tu rival ya ha hablado.");
+                                
+                            }
+                            estado = estadoEsperandoGanador;
+                            
+                        // Si se trata de desconexion:
                         } else if (palabras[0].compareTo("0010")==0){
                             error = notificacionFinalizar;
-                            estado = estadoInicial; // Tal vez haga falta hacer algo mas
+                            estado = estadoInicial;
                         }
                     break;
-                    
+            // Estado Esperando Chinos Rival
                 case estadoEsperandoChinosRival:
-                    
                     error = estadoEsperandoChinosRival;
                     estado = estadoEsperandoGanador;
-                    //solicitudRival = new String(palabras[1]);
-                    
                     break;
+            // Estado Esperando Ganador
                 case estadoEsperandoGanador:
-                    error = estadoEsperandoGanador;
+                    error = notificacionGanador;
+                    // Comprueba que sea una notificacion de ganador
+                    if (palabras[0].compareTo("1011")==0){
+                        ganador = Integer.parseInt(palabras[1]);
+                        ganadorAlias = palabras[2];
+                        // Se añaden los chinos elegidos por el rival por si no se habian mandado antes:
+                        numChinos = Integer.parseInt(palabras[3]); 
+                        numChinosTotal = Integer.parseInt(palabras[4]);
+                    }
                     estado = estadoEsperandoNuevaRonda;
-                    
                     break;
-                
+            // Estado Esperando Nueva Ronda
+                case estadoEsperandoNuevaRonda:
+                    error = notificacionRondasRestantes;
+                    numRondas = Integer.parseInt(palabras[1]);
+                    // Puede comenzar nueva ronda o finalizar el juego
+                    if(numRondas == 0){
+                        estado = estadoFinalizar;
+                    } else {
+                        estado = estadoAutenticado;
+                    }
+                    break;
+            // Estado Final
+                case estadoFinalizar:
+                    System.out.println("El juego ha finalizado.");
+                    System.exit(0);
+                    break;
+            // Estado de Error
                 case estadoError:
                     error = estadoError;
-                    estado = estadoInicial;
+                    estado = estadoInicial; // Devuelve al estado inicial en cualquier caso
                     break;
                 default:
                     error=-1;
                     break;
             };
         } catch (IOException ex) {
-            //ex.printStackTrace();
             error=-2;
         }
         
@@ -148,35 +189,56 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
     // Envi'a mensaje de confirmacio'n del registro
 
     /**
-     *
-     * @param alias
-     * @return
+     * Envia solicitud de login de un alias enviado
+     * @param alias un alias con el que se registrará el usuario
      */
     
     public void enviarLogin(String alias) {
         out.println(fabricaDeMensajes.mAlias(alias));    
         out.flush();
     }
+    /**
+     * Envía el mensaje de peticion de juego contra la máquina
+     */
     public void enviarVsMaquina(){
         out.println(fabricaDeMensajes.mVsMaquina());
         out.flush();
     }
+    /**
+     * Envía el mensaje de petición de juego contra un segundo jugador
+     * @param rival nombre del rival con el que quieres jugar
+     */
     public void enviarVsHumano(String rival){
         out.println(fabricaDeMensajes.mVsHumano(rival));
         out.flush();
     }
+    /**
+     * Envía el número de rondas restantes o introducidas por el usuario
+     * @param numero número de rondas restantes/introducidas
+     */
     public void enviarNumeroRondas(int numero){
         out.println(fabricaDeMensajes.mNumeroRondas(numero));
         out.flush();
     }
+    /**
+     * Envía el número de chinos totales predichos por el jugador
+     * @param numero chinos predichos
+     */
     public void enviarNumeroChinos(int numero){
         out.println(fabricaDeMensajes.mNumeroChinos(numero));
         out.flush();
     }
+    /**
+     * Envía el número de chinos elegidos en la mano
+     * @param numero chinos en mano
+     */
     public void enviarNumeroChinosElegidos(int numero){
         out.println(fabricaDeMensajes.mChinos(numero));
         out.flush();
     }
+    /**
+     * Envía un mensaje simple de petición de cierre de sesión
+     */
     public void enviarDespedida(){
         out.println(fabricaDeMensajes.mDesconectar());
         out.flush();

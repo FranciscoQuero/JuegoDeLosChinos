@@ -1,24 +1,17 @@
 
 package mensajesjuegochinos;
-/*
- * ProtocoloDirectorio.java
- *
- * Created on 18 de marzo de 2006, 3:11
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
 
 /**
  *
- * @author jjramos
+ * @author Francisco J. Quero
  */
 
 //
-// Clase padre del protocolo de directorio implementado.
-// Especifica los formatos de mensajes del protocolo y otras
-// operaciones comunes. 
-// 
+/**
+ * Clase padre del protocolo de directorio implementado.
+ * Especifica los formatos de mensajes del protocolo y otras
+ * operaciones comunes. 
+*/
 public class MensajeProtocoloJuegoChinos {
     
     static final int errorEnRegistro=1;
@@ -27,10 +20,6 @@ public class MensajeProtocoloJuegoChinos {
     public void Protocolo() {
     }
     
-public     String mensajeBienvenidaCliente(String texto){
-        
-        return "Cliente Juego de los Chinos 1.0 fjqr "+texto;
-    }
 public     String mAlias(String login){
         String mensaje;
         mensaje="1110"+" "+login+" "+"*";
@@ -91,7 +80,7 @@ public     String mNumeroRondas(int nRondas){
     }
 public     String mNumeroChinos(int nChinos){
         String mensaje;
-        mensaje="0111"+" "+nChinos+" "+"*";
+        mensaje="1000"+" "+nChinos+" "+"*";
         return mensaje;
     }    
 
@@ -109,10 +98,10 @@ public     String mChinos(int numChinosMano){
             return mensaje;
     }
     
-public     String mGanador(int ganador, String texto, String alias, int numChinosMano, int numChinosTotal){
+public     String mGanador(int ganador, String alias, int numChinosMano, int numChinosTotal){
         String mensaje;
         
-        mensaje = "1011" +" "+ ganador +" "+ texto +" "+ alias +" "+ numChinosMano +" "+ numChinosTotal +" "+ "*";
+        mensaje = "1011" +" "+ ganador +" "+ alias +" "+ numChinosMano +" "+ numChinosTotal +" "+ "*";
         
             return mensaje;
     }
@@ -131,9 +120,5 @@ public     String mError(String texto){
         mensaje = "1101"+" "+texto+" "+"*";
         
         return mensaje;
-    }
-
-    public String mensajeSaludoCliente(String hola) {
-      return hola;
     }
 }

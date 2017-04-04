@@ -17,7 +17,7 @@ import mensajesjuegochinos.MensajeProtocoloJuegoChinos;
 
 /**
  *
- * @author Francis
+ * @author Francisco J. Quero
  */
 public class ClienteTCP {
     public Socket socket;
@@ -28,15 +28,19 @@ public class ClienteTCP {
     public String alias;
     public int puerto;
     public int numChinos;
+    public int numChinosTotales;
     public int numRondas;
     public boolean cerrarConexion;
     ProtocoloCliente protocolo;
+    public int numRondasGanadas, numRondasPerdidas;
         
     public ClienteTCP(){
         fabricaDeMensajes=new MensajeProtocoloJuegoChinos();
-        servidorDir = "Hasta aqui bien";
+        servidorDir = "localhost";
         alias = new String();
         cerrarConexion = false;
+        numRondasGanadas = 0;
+        numRondasPerdidas = 0;
     }
     public void setServidor(String texto){
         this.servidorDir = texto;
@@ -53,7 +57,6 @@ public class ClienteTCP {
     
     public static void main(String []args){
         ClienteTCP conexion = new ClienteTCP();
-        BufferedReader inConsola = new BufferedReader(new InputStreamReader(System.in));
         Scanner conin;
         conin = new Scanner(System.in);
         int peticion;
@@ -79,7 +82,7 @@ public class ClienteTCP {
         
         conexion.alias = conin.nextLine();
         conexion.protocolo.enviarLogin(conexion.alias);
-        
+        int suma;
         do {
                
                 // Segu'n el tipo de evento (mensaje recibido), interpretada por el objeto "protocolo", 
@@ -88,8 +91,6 @@ public class ClienteTCP {
                 switch(peticion=conexion.protocolo.recibirPeticion()){
                     
                     // Solicitud de darse de alta en la base de datos:
-                    // Mensaje:
-                    //  1110 <nombre de usuario>
                     case ProtocoloCliente.notificacionAliasIncorrecto:
                         System.out.print("Por favor, introduce tu alias: ");
                         conexion.alias = conin.nextLine();
@@ -97,19 +98,73 @@ public class ClienteTCP {
                         break;
                     case ProtocoloCliente.notificacionAutenticado:
 
-                        System.out.print("Elige contra quien quieres jugar (Maquina/Jugador): " );
+                        System.out.println("Elige contra quien quieres jugar (Maquina/Jugador): Jugando contra maquina." );
 
                         // Aqui se comprobaria si quieres jugar contra maquina o humano
-                        // Pero solo esta implementado conta maquina
+                        // Pero solo esta implementado contra maquina
                         conexion.protocolo.enviarVsMaquina();
                         
-                        System.out.print("Jugando contra maquina. Elige numero de rondas: " );
-                        conexion.numRondas = conin.nextInt();
+                        System.out.print("Elige numero de rondas: " );
+                        conexion.numRondas = Integer.parseInt(conin.nextLine());
                         conexion.protocolo.enviarNumeroRondas(conexion.numRondas);
                         
                         break;
-
-                       
+                    case ProtocoloCliente.notificacionTurno:
+                            System.out.print("¿Cuantos chinos eliges?: ");
+                            conexion.numChinos = Integer.parseInt(conin.nextLine());
+                            conexion.protocolo.enviarNumeroChinosElegidos(conexion.numChinos);
+                            
+                            if(conexion.protocolo.hablasElPrimero == false)
+                                System.out.println("Tu rival predice "+ conexion.protocolo.numChinosTotal+" chinos.");
+                            
+                            System.out.print("¿Cuantos chinos predices?: ");
+                            conexion.numChinosTotales = Integer.parseInt(conin.nextLine());
+                            conexion.protocolo.enviarNumeroChinos(conexion.numChinosTotales);
+                            
+                            if(conexion.protocolo.hablasElPrimero == true)
+                                System.out.println("Tu rival predice "+ conexion.protocolo.numChinosTotal+" chinos.");
+                        break;
+                    case ProtocoloCliente.notificacionGanador:
+                        suma = conexion.protocolo.numChinos + conexion.numChinos;
+                        System.out.println("El rival ha sacado "+conexion.protocolo.numChinos+". Ha habido un total de "+suma+" chinos.");
+                        
+                        switch (conexion.protocolo.ganador) {
+                            case 0:
+                                conexion.numRondasPerdidas++;
+                                
+                                System.out.println(conexion.protocolo.ganadorAlias+ " ha ganado esta ronda.");
+                                break;
+                            case 1:
+                                conexion.numRondasGanadas++;
+                                System.out.println("Has ganado esta ronda.");
+                                break;
+                            case 2:
+                                System.out.println(conexion.protocolo.ganadorAlias+". Ronda extra.");
+                                break;
+                            default:
+                                break;
+                            
+                        }
+                        break;
+                    case ProtocoloCliente.notificacionRondasRestantes:
+                        conexion.numRondas = conexion.protocolo.numRondas;
+                        if (conexion.numRondas == 0){
+                            if (conexion.numRondasGanadas > conexion.numRondasPerdidas) {
+                                System.out.println("Has ganado mas rondas que el rival. Enhorabuena, eres el ganador.");
+                            } else if (conexion.numRondasGanadas < conexion.numRondasPerdidas) {
+                                System.out.println("Has ganado menos rondas que el rival. El rival es el ganador.");
+                            } else {
+                                System.out.println("El rival y tu habeis ganado las mismas rondas. Habeis empatado!");
+                            }
+                            conexion.protocolo.enviarDespedida();
+                        } else {
+                            System.out.println("Quedan "+conexion.numRondas+" rondas restantes. Comenzando siguiente ronda...\n");
+                            // Comenzamos nueva ronda
+                            conexion.protocolo.enviarNumeroRondas(conexion.numRondas);
+                            
+                        }
+                        break;
+                        
                     case ProtocoloCliente.notificacionFinalizar:
                         conexion.protocolo.mDesconectar();
 
@@ -127,7 +182,6 @@ public class ClienteTCP {
                         break;
                 }
         
-       // conexion.fabricaDeMensajes.mAlias(conexion.alias);
         } while(peticion!=ProtocoloCliente.notificacionFinalizar);
     }
 }
