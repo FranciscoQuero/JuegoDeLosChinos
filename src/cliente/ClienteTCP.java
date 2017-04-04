@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017 Francisco J. Quero
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Visit https://github.com/FranciscoQuero/JuegoDeLosChinos for updates and more info
  */
 package cliente;
 
@@ -16,7 +29,9 @@ import java.util.logging.Logger;
 import mensajesjuegochinos.MensajeProtocoloJuegoChinos;
 
 /**
- *
+ * Clase Cliente TCP, que incluye el cliente necesario para conectarse al servidor
+ * de juego de los chinos. Este cliente pide datos al usuario y lo guia a traves del
+ * proceso de la partida. Cuando se han acabado las rondas, se cierra y cierra la conexion.
  * @author Francisco J. Quero
  */
 public class ClienteTCP {
@@ -30,31 +45,46 @@ public class ClienteTCP {
     public int numChinos;
     public int numChinosTotales;
     public int numRondas;
-    public boolean cerrarConexion;
     ProtocoloCliente protocolo;
     public int numRondasGanadas, numRondasPerdidas;
         
+    /**
+     * Constructor sin parámetros que inicializa las variables esenciales
+     */
     public ClienteTCP(){
         fabricaDeMensajes=new MensajeProtocoloJuegoChinos();
         servidorDir = "localhost";
         alias = new String();
-        cerrarConexion = false;
         numRondasGanadas = 0;
         numRondasPerdidas = 0;
     }
+    /**
+     * Establece la dirección del servidor a la deseada.
+     * @param texto direccion del servidor
+     */
     public void setServidor(String texto){
         this.servidorDir = texto;
     }
+    /**
+     * Establece el alias deseado
+     * @param texto alias
+     */
     public void setAlias(String texto){
         this.alias = texto;
     }
+    /**
+     * Establece el puerto al que se conectará
+     * @param port puerto, numero entero
+     */
     public void setPuerto(int port){
         this.puerto = port;
     }
-    public void setCerrar(boolean bool){
-        this.cerrarConexion = bool;
-    }
     
+    /**
+     * Método principal del cliente. Ejecuta la conexión y llama al protocolo para
+     * crear e interpretar los mensajes. Guía al usuario interactivamente.
+     * @param args argumentos opcionales.
+     */
     public static void main(String []args){
         ClienteTCP conexion = new ClienteTCP();
         Scanner conin;
@@ -166,7 +196,7 @@ public class ClienteTCP {
                         break;
                         
                     case ProtocoloCliente.notificacionFinalizar:
-                        conexion.protocolo.mDesconectar();
+                        conexion.protocolo.enviarDespedida();
 
                         
                         try { 

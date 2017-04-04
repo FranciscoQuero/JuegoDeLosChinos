@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017 Francisco J. Quero
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Visit https://github.com/FranciscoQuero/JuegoDeLosChinos for updates and more info
  */
 package cliente;
 
@@ -68,12 +81,15 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         fabricaDeMensajes=new MensajeProtocoloJuegoChinos();
     }
     
-    //
-    // Me'todo que implementa la interpretacio'n de los mensajes recibidos por la 
-    // conexio'n, las transiciones y los estados del protocolo desde el punto de 
-    // vista del servidor. 
-    //  Devuelve un co'digo de mensaje recibido, que la clase "servidor" utiliza para 
-    // realizar la operacio'n que requiera.
+    /**
+     * Método que implementa la interpretación de los mensajes recibidos por la 
+     * conexión, las transiciones y los estados del protocolo desde el punto de 
+     * vista del cliente. 
+     * Devuelve un código de mensaje recibido, que la clase "ClienteTCP" utiliza para 
+     * realizar la operación que requiera.
+     * @return un código único perteneciente al tipo de mensaje recibido
+     */
+    
     // 
     public int recibirPeticion(){
         int error=0;
@@ -185,8 +201,7 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         return error;
     }
 
-        
-    // Envi'a mensaje de confirmacio'n del registro
+       
 
     /**
      * Envia solicitud de login de un alias enviado
@@ -240,7 +255,7 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
      * Envía un mensaje simple de petición de cierre de sesión
      */
     public void enviarDespedida(){
-        out.println(fabricaDeMensajes.mDesconectar());
+        out.println(fabricaDeMensajes.mFinalizar("Adios."));
         out.flush();
     }
 }

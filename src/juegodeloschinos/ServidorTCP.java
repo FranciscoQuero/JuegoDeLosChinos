@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 jjramos
+ * Copyright (C) 2017 Francisco J. Quero
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,6 +13,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Visit https://github.com/FranciscoQuero/JuegoDeLosChinos for updates and more info
  */
 package juegodeloschinos;
 
@@ -167,8 +169,6 @@ public class ServidorTCP {
         public void run(){
             int peticion=0;
             int suma;
-            String mensaje;
-            String [] palabras;
             Usuario u=null,u0;
             int numRondas = 0, numChinos = 0, numChinosTotales = 0, numChinosMaquina = 0;
             SecureRandom r = new SecureRandom();
@@ -223,7 +223,7 @@ public class ServidorTCP {
                             System.out.println("Empieza la maquina contra el usuario "+u.usuario);
                             numChinosMaquina = r.nextInt(6);
                             do {
-                                numChinosTotalesMaquina = r.nextInt(10);
+                                numChinosTotalesMaquina = r.nextInt(10)+1;
                             } while (numChinosTotalesMaquina < numChinosMaquina);
                             System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y en total: "+numChinosTotalesMaquina);
                             protocolo.notificarTurno(quienEmpieza, numChinosMaquina, numChinosTotalesMaquina);
@@ -240,32 +240,38 @@ public class ServidorTCP {
                              if(numChinosTotalesMaquina == 0){
                                 numChinosMaquina = r.nextInt(6);
                                 do {
-                                    numChinosTotalesMaquina = r.nextInt(10);
+                                    numChinosTotalesMaquina = r.nextInt(10)+1;
                                 } while (numChinosTotalesMaquina < numChinosMaquina);
                                 System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y en total: "+numChinosTotalesMaquina);
                             }
                              
                             suma = numChinos + numChinosMaquina;
+                            
                             if (suma == numChinosTotalesMaquina){
-                                protocolo.notificarGanador(0, "maquina", numChinos, numChinosTotalesMaquina);
+                                protocolo.notificarGanador(0, "maquina", numChinosMaquina, numChinosTotalesMaquina);
                                 System.out.println("La maquina ha ganado esta ronda contra "+u.usuario);
-                                numRondas--;
+                                protocolo.solicitudNumRondas--;
                             } else if(suma == numChinosTotales) {
-                                protocolo.notificarGanador(1, u.usuario, numChinos, numChinosTotalesMaquina);
+                                protocolo.notificarGanador(1, u.usuario, numChinosMaquina, numChinosTotalesMaquina);
                                 System.out.println("Esta ronda la ha ganado el usuario "+u.usuario);
-                                numRondas--;
+                                protocolo.solicitudNumRondas--;
                             } else {
-                                protocolo.notificarGanador(2, "Empate", numChinos, numChinosTotalesMaquina);
+                                protocolo.notificarGanador(2, "Empate", numChinosMaquina, numChinosTotalesMaquina);
                                 System.out.println("Empate en esta ronda contra "+u.usuario);
                             }
+                            
+                            if (protocolo.solicitudNumRondas == 0)
+                                protocolo.estado = 8;
                             
                             // Reseteamos parametros generados
                             
                             numChinosMaquina = 0;
                             numChinosTotalesMaquina = 0;
-                         
+                            numChinos = 0;
+                            numChinosTotales = 0;
+                            
                             // Notificamos numero de rondas restantes
-                            protocolo.notificarRondasRestantes(numRondas);
+                            protocolo.notificarRondasRestantes(protocolo.solicitudNumRondas);
 
                          break;
                         //
@@ -273,7 +279,7 @@ public class ServidorTCP {
                         // CERRAR
                         //
                     case Protocolo.solicitudFinalizar:
-                        protocolo.responderSolicitudCerrar("Un placer jugar contigo. Saludos.");
+                        protocolo.notificarFinal("Un placer jugar contigo. Saludos.");
 
                         try { 
                             in.close();

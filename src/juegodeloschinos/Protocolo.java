@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017 Francisco J. Quero
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Visit https://github.com/FranciscoQuero/JuegoDeLosChinos for updates and more info
  */
 package juegodeloschinos;
 
@@ -86,7 +99,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
             // Según el estado actual, se interpreta el mensaje;
             mensaje=in.readLine();
             palabras=mensaje.split(" ");
-            System.out.println(mensaje);
+            // System.out.println(mensaje);
             
             switch(estado){
                 case estadoInicial:
@@ -119,7 +132,12 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
                         } else if (palabras[0].compareTo("0111")==0){ //Esta enviando numero de rondas
                             solicitudNumRondas = parseInt(palabras[1]);
                             error = solicitudRondas;
-                            estado = estadoEsperandoNumeroChinos;
+                            if (solicitudNumRondas == 0) {
+                                estado = estadoFinal;
+                            } else {
+                                estado = estadoEsperandoNumeroChinos;
+                            }
+                            
                         }
                     break;
                     
@@ -132,7 +150,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
                     break;
                 case estadoVsMaquina:
                     error = solicitudVsMaquina;
-                    estado = estadoEsperandoNumeroRondas;
+                    estado = estadoAutenticado;
                     
                     break;
                 case estadoEsperandoJ2:
@@ -151,7 +169,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
                             solicitudChinos = Integer.parseInt(palabras[1]);
                             error = solicitudNumChinosTotales;
                             
-                            solicitudNumRondas--;
+                            //solicitudNumRondas--;
                             if (solicitudNumRondas == 0) {
                                 estado = estadoFinal;
                             } else {
@@ -166,7 +184,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
                     break;
                 case estadoFinal:
                     
-                    if (palabras[0].compareTo("1000")==0)
+                    if (palabras[0].compareTo("1100")==0)
                         error = solicitudFinalizar;
                     
                     estado = estadoInicial;
@@ -187,7 +205,11 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
         return error;
     }
 
-        
+    /**
+     * Envía el mensaje de confirmación de alias correcto
+     * @param alias nombre confirmado
+     * @return posible error
+     */
     public int confirmarAlias(String alias){
         int error=0;
         
@@ -195,40 +217,63 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
         estado=estadoAutenticado;
         return error;
     }
-    
-    // Envi'a mensaje de confirmacio'n de contacto aniadido:
+    /**
+     * Envía el mensaje de alias incorrecto
+     * @return 
+     */
     public int confirmarAliasIncorrecto(){
         int error=0;
         out.println(fabricaDeMensajes.mAliasIncorrecto("Error de identificacion. Prueba con otro alias."));
         return error;
     }
-    
-     // Envi'a mensaje de denegacio'n de contacto aniadido:
+    /**
+     * Envía el mensaje de confirmación de segundo jugador encontrado
+     * @param texto nombre del jugador encontrado
+     * @return 
+     */
     public int notificarJugadorEncontrado(String texto){
         int error=0;
         out.println(fabricaDeMensajes.mJugadorEncontrado("Se ha encontrado el usuario."));
         estado=estadoEsperandoNumeroRondas;
         return error;
     }
-
+    /**
+     * Envía el mensaje de notificación de turno
+     * @param empiezaJugador 0 si empieza la máquina, 1 si empieza le jugador notificado
+     * @param numChinosMano número de chinos en la mano del rival/servidor
+     * @param numChinosTotal número de chinos predichos por el rival/servidor
+     */
     public void notificarTurno(int empiezaJugador, int numChinosMano, int numChinosTotal) {
        out.println(fabricaDeMensajes.mHablaJugador(empiezaJugador, numChinosMano, numChinosTotal));   
     }
-    
+    /**
+     * Envía el mensaje de notificación del ganador
+     * @param ganador 0/1/2
+     * @param aliasGanador Nombre del ganador
+     * @param numChinosMano Número de chinos en la mano del rival o servidor
+     * @param numChinosTotal Número de chinos predichos por el rival o servidor
+     */
     public void notificarGanador(int ganador, String aliasGanador, int numChinosMano, int numChinosTotal) {
         out.println(fabricaDeMensajes.mGanador(ganador, aliasGanador, numChinosMano, numChinosTotal));
     }
+    /**
+     * Envía el mensaje de notificación de final de partida
+     * @param despedida mensaje de despedida
+     */
     public void notificarFinal(String despedida) {
       out.println(fabricaDeMensajes.mFinalizar(despedida));
     }
-
+    /**
+     * Envía el mensaje de notificación de error
+     * @param textoError mensaje de error
+     */
     public void notificarError(String textoError) {
      out.println(fabricaDeMensajes.mError(textoError));  
     }
-    
-    public void responderSolicitudCerrar(String texto){
-        out.println(fabricaDeMensajes.mJugadorEncontrado(texto));
-    }
+    /**
+     * Envía el mensaje de notificación de rondas restantes
+     * @param rondas número de rondas restantes
+     */
     public void notificarRondasRestantes(int rondas){
         out.println(fabricaDeMensajes.mNumeroRondas(rondas));
     }
