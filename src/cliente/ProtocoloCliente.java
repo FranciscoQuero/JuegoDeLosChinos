@@ -72,7 +72,11 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         
         public MensajeProtocoloJuegoChinos fabricaDeMensajes;
                    
-    /** Creates a new instance of Protocolo */
+    /**
+     * Crea un objeto de la clase Protocolo
+     * @param in_ buffer de entrada
+     * @param out_ buffer de salida
+     */
     public ProtocoloCliente(BufferedReader in_, PrintWriter out_) {
         in=in_;
         out=out_;        

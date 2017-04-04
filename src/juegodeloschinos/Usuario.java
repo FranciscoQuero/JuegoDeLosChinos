@@ -34,7 +34,7 @@ public class Usuario {
     
     /**
      * Instancia con un nombre de usuario
-     * @param login nombre de usuario
+     * @param login_ nombre de usuario
      */
     public Usuario(String login_) {
         usuario=login_;

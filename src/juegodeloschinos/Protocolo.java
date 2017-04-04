@@ -73,7 +73,12 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
         
         MensajeProtocoloJuegoChinos fabricaDeMensajes;
                    
-    /** Creates a new instance of Protocolo */
+    /** 
+     * Crea un objeto de la clase Protocolo
+     * @param n nombre de la hebra
+     * @param in_ buffer de entrada
+     * @param out_ buffer de salida
+     */
     public Protocolo( String n, BufferedReader in_, PrintWriter out_) {
         in=in_;
         out=out_;
@@ -219,7 +224,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
     }
     /**
      * Envía el mensaje de alias incorrecto
-     * @return 
+     * @return devuelve un posible error
      */
     public int confirmarAliasIncorrecto(){
         int error=0;
@@ -229,7 +234,7 @@ public class Protocolo extends MensajeProtocoloJuegoChinos {
     /**
      * Envía el mensaje de confirmación de segundo jugador encontrado
      * @param texto nombre del jugador encontrado
-     * @return 
+     * @return devuelve un posible error
      */
     public int notificarJugadorEncontrado(String texto){
         int error=0;
