@@ -16,8 +16,13 @@
  * 
  * Visit https://github.com/FranciscoQuero/JuegoDeLosChinos for updates and more info
  */
+
+
 package juegodeloschinos;
 
+import coding.Codificaciones;
+import coding.Resumen;
+import org.apache.commons.codec.binary.Base64;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -115,6 +120,8 @@ public class ServidorTCP {
         return error;
     }
     
+    
+    
     //
     // La subclase "Servicio" implementa las operaciones del servicio.
     // Cada vez que se registra una solicitud del servicio al puerto de acceso,
@@ -169,12 +176,13 @@ public class ServidorTCP {
         public void run(){
             int peticion=0;
             int suma;
-            Usuario u=null,u0;
+            Usuario u=null;
             int numRondas = 0, numChinos = 0, numChinosTotales = 0, numChinosMaquina = 0;
             SecureRandom r = new SecureRandom();
             int quienEmpieza;
             int numChinosTotalesMaquina = 0;
             // Mientras... siempre
+            
             do {
                
                 // Segu'n el tipo de evento (mensaje recibido), interpretada por el objeto "protocolo", 
