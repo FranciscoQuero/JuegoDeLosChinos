@@ -140,13 +140,14 @@ public     String mAliasCorrecto(String texto){
      * la elección anterior del rival, en caso de que el usuario notificado sea el
      * segundo en hablar
      * @param empiezaJugador 0 si empieza, 1 si ya ha hablado el rival
-     * @param numChinosMano numero de chinos elegidos por el rival en caso de que ya haya hablado
-     * @param numChinosTotal numero de chinos predichos por el rival en caso de que ya haya hablado
+     * @param chinosCifrados string codificado en base64 y cifrado con DES con la 
+     * informacion de los chinos elegidos y predichos por la maquina, asi como su hash
+     * @param claveCifrada clave simetrica cifrada con clave asimetrica
      * @return mensaje elaborado
      */
-    public     String mHablaJugador(int empiezaJugador, int numChinosMano, int numChinosTotal ){
+    public     String mHablaJugador(int empiezaJugador, String chinosCifrados, String claveCifrada ){
             String mensaje;
-            mensaje="1001" +" "+ empiezaJugador + " " + numChinosMano + " " + numChinosTotal + " "+"*";
+            mensaje="1001" +" "+ empiezaJugador + " " + chinosCifrados + " " + claveCifrada + " " +"*";
             return mensaje;
         }
     /**

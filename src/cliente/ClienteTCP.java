@@ -91,7 +91,7 @@ public class ClienteTCP {
         conin = new Scanner(System.in);
         int peticion;
         
-        System.out.println("Cliente JuegoDeLosChinos v0.1");
+        System.out.println("Cliente JuegoDeLosChinos v0.2");
         System.out.print("Por favor, introduce servidor: ");
         conexion.servidorDir = conin.nextLine();
         System.out.print("Por favor, introduce puerto: ");
@@ -126,7 +126,7 @@ public class ClienteTCP {
                         conexion.alias = conin.nextLine();
                         conexion.protocolo.enviarLogin(conexion.alias);
                         break;
-                    case ProtocoloCliente.notificacionAutenticado:
+                    case ProtocoloCliente.notificacionAutenticado: // notificacion de autenticado
 
                         System.out.println("Elige contra quien quieres jugar (Maquina/Jugador): Jugando contra maquina." );
 
@@ -139,7 +139,7 @@ public class ClienteTCP {
                         conexion.protocolo.enviarNumeroRondas(conexion.numRondas);
                         
                         break;
-                    case ProtocoloCliente.notificacionTurno:
+                    case ProtocoloCliente.notificacionTurno: // Si se recibe la notificacion del turno
                             System.out.print("¿Cuantos chinos eliges?: ");
                             conexion.numChinos = Integer.parseInt(conin.nextLine());
                             conexion.protocolo.enviarNumeroChinosElegidos(conexion.numChinos);
@@ -154,10 +154,11 @@ public class ClienteTCP {
                             if(conexion.protocolo.hablasElPrimero == true)
                                 System.out.println("Tu rival predice "+ conexion.protocolo.numChinosTotal+" chinos.");
                         break;
-                    case ProtocoloCliente.notificacionGanador:
+                    case ProtocoloCliente.notificacionGanador: // Si se recibe el ganador
                         suma = conexion.protocolo.numChinos + conexion.numChinos;
                         System.out.println("El rival ha sacado "+conexion.protocolo.numChinos+". Ha habido un total de "+suma+" chinos.");
                         
+                        // Notificacion y determinacion del ganador de la ronda
                         switch (conexion.protocolo.ganador) {
                             case 0:
                                 conexion.numRondasPerdidas++;
@@ -176,9 +177,11 @@ public class ClienteTCP {
                             
                         }
                         break;
-                    case ProtocoloCliente.notificacionRondasRestantes:
+                    case ProtocoloCliente.notificacionRondasRestantes: // Si se reciben las rondas restantes
                         conexion.numRondas = conexion.protocolo.numRondas;
-                        if (conexion.numRondas == 0){
+                        if (conexion.numRondas == 0){ // Si ya no quedan rondas
+                            
+                            // Se compara y elige el ganador final
                             if (conexion.numRondasGanadas > conexion.numRondasPerdidas) {
                                 System.out.println("Has ganado mas rondas que el rival. Enhorabuena, eres el ganador.");
                             } else if (conexion.numRondasGanadas < conexion.numRondasPerdidas) {
@@ -189,16 +192,15 @@ public class ClienteTCP {
                             conexion.protocolo.enviarDespedida();
                         } else {
                             System.out.println("Quedan "+conexion.numRondas+" rondas restantes. Comenzando siguiente ronda...\n");
-                            // Comenzamos nueva ronda
+                            // Comenzamos nueva ronda si no se ha llegado al final
                             conexion.protocolo.enviarNumeroRondas(conexion.numRondas);
                             
                         }
                         break;
                         
-                    case ProtocoloCliente.notificacionFinalizar:
+                    case ProtocoloCliente.notificacionFinalizar: // Si se recibe el fin del juego
                         conexion.protocolo.enviarDespedida();
 
-                        
                         try { 
                             conexion.in.close();
                             conexion.out.close();

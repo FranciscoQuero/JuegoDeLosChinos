@@ -20,9 +20,6 @@
 
 package juegodeloschinos;
 
-import coding.Codificaciones;
-import coding.Resumen;
-import org.apache.commons.codec.binary.Base64;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -50,7 +47,7 @@ public class ServidorTCP {
     static int puerto;
     
     /** Creates a new instance of Servidor */
-    // Inicializacio'n simple
+    // Inicialización simple
     public ServidorTCP() {
         puerto=0;
     }
@@ -61,7 +58,7 @@ public class ServidorTCP {
      * @param args posible puerto que el usuario quiera introducir.
      */
     public static void main(String args[]){
-        
+        // Puerto por defecto
         puerto=9090;
         
         if(args.length<1&&false){
@@ -99,9 +96,8 @@ public class ServidorTCP {
     static int iniciarServicio(int p){
         int error=0;
       
-        // Creamos la base de datos de usuarios (deberi'a ser persistente, mantenerse en una 
+        // Creamos la base de datos de usuarios (debería ser persistente, mantenerse en una 
         // base de datos en disco)
-        //
         usuarios=new HashMap();
         
         
@@ -120,12 +116,6 @@ public class ServidorTCP {
         return error;
     }
     
-    
-    
-    //
-    // La subclase "Servicio" implementa las operaciones del servicio.
-    // Cada vez que se registra una solicitud del servicio al puerto de acceso,
-    // se lanza una hebra nueva para ofrecerlo.
 /**
  * La subclase "Servicio" implementa las operaciones del servicio.
  * Cada vez que se registra una solicitud del servicio al puerto de acceso,
@@ -163,7 +153,7 @@ public class ServidorTCP {
                 protocolo=new Protocolo(Servicio.currentThread().getName(),in,out);
                 System.out.println(Servicio.currentThread().getName());
             } catch(IOException e){
-                // Se acabo'
+                // Se acabo
                 System.err.println("Error en la hebra "+Servicio.currentThread().getName());
             }
         }
@@ -174,15 +164,18 @@ public class ServidorTCP {
          */
         @SuppressWarnings("null")
         public void run(){
-            int peticion=0;
-            int suma;
-            Usuario u=null;
+            int peticion=0; // representa la peticion del actual mensaje recibido
+            int suma; // Auxiliar que contendra el numero de chinos totales
+            Usuario u=null; // Usuario contenedor donde se guardara el usuario
             int numRondas = 0, numChinos = 0, numChinosTotales = 0, numChinosMaquina = 0;
-            SecureRandom r = new SecureRandom();
-            int quienEmpieza;
-            int numChinosTotalesMaquina = 0;
-            // Mientras... siempre
+            // Numero de rondas restantes, de chinos elegidos, de chinos predichos y por la maquina
             
+            SecureRandom r = new SecureRandom(); // Random utilizado para generar chinos
+            
+            int quienEmpieza; // 0 o 1 para saber quien empieza
+            int numChinosTotalesMaquina = 0; // chinos elegidos por la maquina
+            
+            // Mientras... siempre
             do {
                
                 // Segu'n el tipo de evento (mensaje recibido), interpretada por el objeto "protocolo", 
@@ -213,14 +206,17 @@ public class ServidorTCP {
                         
                         break;
 
-                        
+                        // Mensaje de peticion de juego vs la maquina
                      case Protocolo.solicitudVsMaquina:
                         System.out.println("El usuario "+u.usuario+" ha decidido jugar contra la maquina");
                         break;
                         
+                        // Mensaje de eleccion de las rondas totales
                      case Protocolo.solicitudRondas:
                         numRondas = protocolo.solicitudNumRondas;
                         System.out.println("El usuario "+u.usuario+" ha elegido "+protocolo.solicitudNumRondas+" rondas.");
+                        
+                        // Generamos quien empieza y la cantidad de chinos si procede
                         quienEmpieza = r.nextInt(2); // 0 si empieza el jugador, 1 si empieza la maquina
                         
                         if (quienEmpieza == 0){
@@ -233,28 +229,34 @@ public class ServidorTCP {
                             do {
                                 numChinosTotalesMaquina = r.nextInt(10)+1;
                             } while (numChinosTotalesMaquina < numChinosMaquina);
-                            System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y en total: "+numChinosTotalesMaquina);
+                            System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y ha predicho: "+numChinosTotalesMaquina);
                             protocolo.notificarTurno(quienEmpieza, numChinosMaquina, numChinosTotalesMaquina);
                         }
                          break;
                          
+                         // Si el usuario ha mandado su eleccion de chinos
                      case Protocolo.solicitudNumChinos:
                             numChinos = protocolo.solicitudChinosElegidos;
                             System.out.println("Elegidos "+numChinos+" chinos por el usuario "+u.usuario);
                          break;
+                         
+                         // Si el usuario ha mandado su prediccion
                      case Protocolo.solicitudNumChinosTotales:
                              numChinosTotales = protocolo.solicitudChinos;
                              System.out.println("Predichos "+numChinosTotales+" chinos por el usuario "+u.usuario);
+                             
+                             // Si no hemos elegido y predicho chinos antes, lo hacemos ahora
                              if(numChinosTotalesMaquina == 0){
                                 numChinosMaquina = r.nextInt(6);
                                 do {
                                     numChinosTotalesMaquina = r.nextInt(10)+1;
                                 } while (numChinosTotalesMaquina < numChinosMaquina);
-                                System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y en total: "+numChinosTotalesMaquina);
+                                System.out.println("La maquina ha elegido sacar "+numChinosMaquina+" chinos y ha predicho: "+numChinosTotalesMaquina);
                             }
-                             
+                            // Calculamos el total de chinos
                             suma = numChinos + numChinosMaquina;
                             
+                            // Decidimos y notificamos ganador
                             if (suma == numChinosTotalesMaquina){
                                 protocolo.notificarGanador(0, "maquina", numChinosMaquina, numChinosTotalesMaquina);
                                 System.out.println("La maquina ha ganado esta ronda contra "+u.usuario);
@@ -268,6 +270,7 @@ public class ServidorTCP {
                                 System.out.println("Empate en esta ronda contra "+u.usuario);
                             }
                             
+                            // Si se han acabado las rondas restantes, pasamos al estado final
                             if (protocolo.solicitudNumRondas == 0)
                                 protocolo.estado = 8;
                             
@@ -282,13 +285,12 @@ public class ServidorTCP {
                             protocolo.notificarRondasRestantes(protocolo.solicitudNumRondas);
 
                          break;
-                        //
-                        // Solicitud de cieere de la sesio'n:
-                        // CERRAR
-                        //
+                        
+                        // Solicitud de cierre de la sesion:
                     case Protocolo.solicitudFinalizar:
                         protocolo.notificarFinal("Un placer jugar contigo. Saludos.");
-
+                        System.out.println("El usuario "+u.usuario+" se ha desconectado.");
+                        usuarios.remove(u.usuario, u); // elimina el usuario de la lista de logueados
                         try { 
                             in.close();
                             out.close();

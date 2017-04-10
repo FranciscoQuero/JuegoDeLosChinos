@@ -22,6 +22,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import static java.lang.Integer.parseInt;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.crypto.spec.SecretKeySpec;
+import juegodeloschinos.Protocolo;
 import mensajesjuegochinos.MensajeProtocoloJuegoChinos;
 
 /**
@@ -32,11 +45,16 @@ import mensajesjuegochinos.MensajeProtocoloJuegoChinos;
  * @author Francisco J. Quero
  */
 public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
-    
+        // Buffers de entrada y salida
         PrintWriter out;
         BufferedReader in;
-        int estado;
-  
+        int estado; // estado actual
+        
+        // Claves utilizadas para el cifrado
+        PublicKey publicKeyClient;
+        PublicKey publicKeyServer;
+        PrivateKey privateKeyClient;
+        
         // Estados del protocolo (ver el disenio de la ma'quina de estados)
         static final int estadoInicial=0;
         static final int estadoEsperandoAutenticacion=1;
@@ -58,20 +76,47 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         public static final int  notificacionError=7;
         public static final int notificacionTurno = 8;
         
-
-        
         // Variables temporales que contienen los datos de la notificacion en curso:
-        public String alias;
-        public String aliasRival;
-        public int numRondas;
-        public int numChinos;
-        public int numChinosTotal;
-        public boolean hablasElPrimero;
-        public int ganador;
-        public String ganadorAlias;
+        public String alias; // alias enviado
+        public String aliasRival; // alias del rival
+        public int numRondas; // numero de rondas restantes/pedidas
+        public int numChinos; // numero de chinos del jugador
+        public int numChinosTotal; // numero de chinos predichos por el jugador
+        public boolean hablasElPrimero; // boolean que inidica quien habla primero
+        public int ganador; // int que indica quien ha ganado o si hay empate
+        public String ganadorAlias; // alias del ganador
         
+        // Objeto para fabricar los mensajes
         public MensajeProtocoloJuegoChinos fabricaDeMensajes;
-                   
+               
+        /**
+         * Este metodo sirve para simular el intercambio de claves. Damos por hecho
+         * que el cliente ya tiene su par de claves generadas y ya ha recibido de
+         * alguna forma la clave publica del servidor.
+         */
+        private void prepararClaves(){
+            try {
+                String clavePublicaCliente = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDHMjWfzQ7EB1oF7qlh7l0rm4Tf26RK9tk1/HO7Z90SRXKr2nNLmEtXfJvPM+fQbcoqrqxTdVlYJq6o71E3tQZnJ6yfX/nSX2tav5Y8BSV1eCNcoNU2iFArLTK+R09PlFRuRV7fyFacd3oVL7iSOGdpOqp+AZMwz0UUJ6dhrLMpZQIDAQAB";
+                String clavePrivadaCliente = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAMcyNZ/NDsQHWgXuqWHuXSubhN/bpEr22TX8c7tn3RJFcqvac0uYS1d8m88z59BtyiqurFN1WVgmrqjvUTe1BmcnrJ9f+dJfa1q/ljwFJXV4I1yg1TaIUCstMr5HT0+UVG5FXt/IVpx3ehUvuJI4Z2k6qn4BkzDPRRQnp2GssyllAgMBAAECgYBQB1IYA7B8/V8jpwESQUvZaz/1GC9nlskpsWVl05Kz9obdmIRdyK/sVDndA0ONL67bexXs6eadTd06Lfv5X5dUQNBEKSANwhpGZH9Fv/Y68tZjI6Ng2wls1c3XUtFQuhPDT9vMwu/NiAH8W77uzux68sMm/AgRCyEzBhljFOTIgQJBAOeB6s0HwxjHv3bWdVpNEVLQGbSsqSzWpGBz8qv49nMWQ1xam0N6HaHNJ+c64nQybYX8QV3x66K5NlIQy1omsxECQQDcRS5AGwrNTIFgEUoHduHyoyTNGVJRFoza1jJerjoP1Zh9QiMfuEORDpkbMJlnzxITUiU8F4b8QsT4aT+NzOkVAkEAsQXNxmO2Ej/DLxrD933QzlMkJNyWLBwg60Qd/tRLlysh7P+3k7xP5kZaydxkBtf8maSPU0fGl9IqMEx5QoEvEQJAPckN+x9avVF7bMYMvOFE6bmHZhx3MZWgtvWkNViroqtoVaJKlegq07KDkdPlA/Bagp7lIOD8lR/pfkCPeigDLQJADND4d9waSIEBVJf1ATr2vENy2DcJxQo0tdVd08I5vwKcUKniH/rnqHm7v4MW0Ydb8gLZaR1qYMX77L+JSTl/CQ==";
+                
+                KeyFactory kf = KeyFactory.getInstance("RSA");
+                
+                X509EncodedKeySpec X509Key = new X509EncodedKeySpec(Base64.getDecoder().decode(clavePublicaCliente));
+                this.publicKeyClient = kf.generatePublic(X509Key);
+                
+                String clavePublicaServidor = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC25hBeDVAhaHZIt+1Snu1NFOz2f9z3C9i8Q2J3URJ0xx1kdoXu6ffpN4BrLsFmuh/giWAGdfrVHevtZIX7TI+FJQgEJvSkFIWcrbNC3gwT7drdKjobN/MsZZlx98H3NSbBzhCrAQRILCCEpsQYE5sf20HQ8q7V21ECUwyxO0FXpQIDAQAB";
+                
+                X509Key = new X509EncodedKeySpec(Base64.getDecoder().decode(clavePublicaServidor));
+                this.publicKeyServer = kf.generatePublic(X509Key);
+                
+                PKCS8EncodedKeySpec PKCS8Key = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(clavePrivadaCliente));
+                this.privateKeyClient = kf.generatePrivate(PKCS8Key);
+            } catch (NoSuchAlgorithmException ex) {
+                Logger.getLogger(Protocolo.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InvalidKeySpecException ex) {
+                Logger.getLogger(Protocolo.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     /**
      * Crea un objeto de la clase Protocolo
      * @param in_ buffer de entrada
@@ -98,7 +143,7 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
     public int recibirPeticion(){
         int error=0;
         int aux;
-        String mensaje;
+        String mensaje; // mensaje recibido
         String [] palabras;
         
         try {   
@@ -134,6 +179,9 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
                         // Si se trata de notificacion de turno:
                         if (palabras[0].compareTo("1001")==0){
                             error = notificacionTurno;
+                            
+                            int[] mensajeDescifrado = descifrarMensaje(mensaje);
+                            
                             aux = parseInt(palabras[1]);
                             if(aux == 0) {
                                 hablasElPrimero = true;
@@ -141,10 +189,9 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
                             }
                             else {
                                 hablasElPrimero = false;
-                                numChinos = parseInt(palabras[2]);
-                                numChinosTotal = parseInt(palabras[3]);
+                                numChinos = mensajeDescifrado[0];
+                                numChinosTotal = mensajeDescifrado[1];
                                 System.out.println("Tu rival ya ha hablado.");
-                                
                             }
                             estado = estadoEsperandoGanador;
                             
@@ -152,7 +199,9 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
                         } else if (palabras[0].compareTo("0010")==0){
                             error = notificacionFinalizar;
                             estado = estadoInicial;
-                        }
+                        } else {
+                        System.err.println("Mensaje incorrecto:"+mensaje);
+                    }
                     break;
             // Estado Esperando Chinos Rival
                 case estadoEsperandoChinosRival:
@@ -204,7 +253,54 @@ public class ProtocoloCliente extends MensajeProtocoloJuegoChinos {
         
         return error;
     }
+    /**
+     * Metodo que descifra el mensaje recibido en caso de que sea un mensaje de
+     * notificacion de turno. Dicho mensaje se encuentra cifrado con clave simetrica y asimetrica,
+     * y contiene ademas un hash para verificacion. Todo ello codificado en Base64.
+     * Por ello, descifra y decodifica ademas de comprobar el hash.
+     * @param mensajeCifrado mensaje generado por el servidor y cifrado
+     * @return un vector de dimension 2 que contiene el numero de chinos elegidos por el rival
+     * en la posicion [0] y el numero de chinos predichos en la posicion [1]
+     */
+    private int[] descifrarMensaje(String mensajeCifrado){
+        int[] numChinos = new int[2];
+        // Primero establecemos las claves
+        this.prepararClaves();
+        
+        // Segundo separamos el mensaje recibido en partes
+        String[] palabras = mensajeCifrado.split(" ");
+        
+        String infoCifrada = palabras[2]; // Primera parte informacion cifrada con DES
+        String claveCifrada = palabras[3]; // Segunda parte clave DES cifrada con RSA
+        
+        // Tercero desciframos la clave simetrica con RSA
+        byte[] claveSimetrica = coding.Criptografia.descifradoAsimetrico(Base64.getDecoder().decode(claveCifrada), this.privateKeyClient);
+       
+        byte[] encodedKey = Base64.getDecoder().decode(claveSimetrica); // lo leemos en base64
+        Key keySimetrica = new SecretKeySpec(encodedKey,0,encodedKey.length, "DES");
+        
+        byte[] infoCifradaByte = Base64.getDecoder().decode(infoCifrada); // obtenemos la info leyendola en base64
+          
+        // Cuarto desciframos la informacion con la clave simetrica descifrada
+        String info = coding.Criptografia.descifradoSimetrico(infoCifradaByte, keySimetrica);
+        
+        String[] campo = info.split(" ");
+            String campoInfo = campo[0]+" "+campo[1]; // Leemos el numero de chinos elegidos y predichos del emisor
+            String hash = campo[2]; // Leemos el hash del emisor
+            
+            // Quinto calcular hash y compararlo con el del emisor
+            if (coding.Resumen.getHashMD5(campoInfo).compareTo(hash) == 0){
+                String[] numeros = campoInfo.split(" ");
+                // Si el hash coincide, obtenemos los datos
+                numChinos[0] = Integer.parseInt(numeros[0]);
+                numChinos[1] = Integer.parseInt(numeros[1]);
+                
+            } else {
+                System.out.println("Error en la transmision del mensaje. Prueba de nuevo.");
+            }
 
+        return numChinos;
+    }
        
 
     /**

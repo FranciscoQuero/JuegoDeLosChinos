@@ -13,6 +13,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Visit https://github.com/FranciscoQuero/JuegoDeLosChinos for updates and more info
  */
 package coding;
 
@@ -29,10 +31,29 @@ public class Codificaciones {
      * @param mensajeOriginal cadena que se quiere codificar
      * @return cadena codificada
      */
-    public static String codificarEnBase64(String mensajeOriginal) {
+    public static String codificarEnBase64(byte[] mensajeOriginal) {
         byte[] bitstream=new byte[128];
         
         // ¿para que es este for?
+        for(int i=0;i<bitstream.length;i++){
+            bitstream[i]=(byte) (255-i);
+        }  
+        
+        bitstream=mensajeOriginal;
+        
+        // Codificamos en base 64:
+        String codificadoBase64 = Base64.encodeBase64String(bitstream);
+        return codificadoBase64;
+    }
+    
+    /**
+     * Codifica en Base64 la cadena introducida y la devuelve en formato String
+     * @param mensajeOriginal cadena que se quiere codificar
+     * @return cadena codificada
+     */
+    public static String codificarEnBase64(String mensajeOriginal) {
+        byte[] bitstream=new byte[128];
+        
         for(int i=0;i<bitstream.length;i++){
             bitstream[i]=(byte) (255-i);
         }  
@@ -43,17 +64,23 @@ public class Codificaciones {
         String codificadoBase64 = Base64.encodeBase64String(bitstream);
         return codificadoBase64;
     }
-
+    
+    
     public static String decodificarEnBase64(String mensajeCodificado){
         Base64 coder=new Base64();
         String decodificado = "";
         byte[] decodificadoByte = coder.decode(mensajeCodificado);
-        
-        for(int i = 0; i < decodificadoByte.length; i++)
-    {
-        decodificado += (char)decodificadoByte[i];
+    
+        decodificado = byteToHex(decodificadoByte);
+        return decodificado;
     }
-        
+    
+    public static String decodificarEnBase64(byte[] mensajeCodificado){
+        Base64 coder=new Base64();
+        String decodificado = "";
+        byte[] decodificadoByte = coder.decode(mensajeCodificado);
+    
+        decodificado = byteToHex(decodificadoByte);
         return decodificado;
     }
     /**
